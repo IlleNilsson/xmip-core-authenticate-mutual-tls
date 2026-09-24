@@ -16,16 +16,11 @@
 use authenticate::x509::Name;
 use authenticate::{AuthenticateError, Authenticator, Presented};
 use context::Verified;
+use identify::evidence::{self, MUTUAL_TLS_HANDSHAKE};
 use xcore::{Mechanism, mechanism};
-
-/// The proof the identify sibling attaches the transport's word under.
-pub const HANDSHAKE: &str = "mutual-tls.handshake";
 
 /// The word the transport promotes when its handshake verified the chain.
 pub const VERIFIED: &str = "verified";
-
-/// The evidence the transport reports the issuer's name under.
-pub const ISSUER: &str = "tls.peer.issuer";
 
 /// The mutual-tls authenticator: which issuers the node takes, if it narrows.
 #[derive(Default)]
@@ -60,11 +55,14 @@ impl Authenticator for Verifier {
                 "'{name}' was presented and this authenticator verifies mutual-tls"
             )));
         }
-        let handshake = presented.proof(HANDSHAKE).ok_or_else(|| {
-            AuthenticateError::new(format!(
-                "no {HANDSHAKE} proof was presented: the transport did not say it verified the peer"
-            ))
-        })?;
+        let handshake = presented
+            .proof(evidence::MUTUAL_TLS_HANDSHAKE)
+            .ok_or_else(|| {
+                AuthenticateError::new(format!(
+                    "no {MUTUAL_TLS_HANDSHAKE} proof was presented: \
+                 the transport did not say it verified the peer"
+                ))
+            })?;
         if handshake.trim() != VERIFIED {
             return Err(AuthenticateError::new(format!(
                 "the transport's word on the handshake is '{}', not '{VERIFIED}'",
@@ -76,7 +74,7 @@ impl Authenticator for Verifier {
             let issuer = presented
                 .evidence
                 .iter()
-                .find(|(evidence, _)| evidence == ISSUER)
+                .find(|(evidence, _)| evidence == evidence::TLS_PEER_ISSUER)
                 .map(|(_, issuer)| Name::parse(issuer))
                 .ok_or_else(|| {
                     AuthenticateError::new(
@@ -101,10 +99,10 @@ mod tests {
 
     fn presented(handshake: Option<&str>) -> Presented {
         let claim = Presented::passed(mechanism::mutual_tls(), "CN=partner-x.example,O=Partner X")
-            .with_evidence(ISSUER, "CN=Partner CA, O=Partner X");
+            .with_evidence(evidence::TLS_PEER_ISSUER, "CN=Partner CA, O=Partner X");
 
         match handshake {
-            Some(word) => claim.with_proof(HANDSHAKE, word),
+            Some(word) => claim.with_proof(evidence::MUTUAL_TLS_HANDSHAKE, word),
             None => claim,
         }
     }
@@ -144,7 +142,7 @@ mod tests {
         assert!(failure.message.contains("does not take"), "{failure}");
 
         let unreported = Presented::passed(mechanism::mutual_tls(), "CN=partner-x.example")
-            .with_proof(HANDSHAKE, "verified");
+            .with_proof(evidence::MUTUAL_TLS_HANDSHAKE, "verified");
         let failure = taking.verify(&unreported).expect_err("no issuer reported");
         assert!(failure.message.contains("reported none"), "{failure}");
     }
