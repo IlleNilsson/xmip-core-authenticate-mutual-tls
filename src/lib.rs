@@ -14,8 +14,10 @@
 //! narrows which issuers it takes and the reported issuer is not one.
 
 use authenticate::x509::Name;
-use authenticate::{AuthenticateError, Authenticator, Presented};
+use authenticate::{AuthenticateError, Authenticator};
 use context::Verified;
+use context::property;
+use identify::Presented;
 use identify::evidence::{self, MUTUAL_TLS_HANDSHAKE};
 use xcore::{Mechanism, mechanism};
 
@@ -74,7 +76,7 @@ impl Authenticator for Verifier {
             let issuer = presented
                 .evidence
                 .iter()
-                .find(|(evidence, _)| evidence == evidence::TLS_PEER_ISSUER)
+                .find(|(evidence, _)| evidence == property::TLS_PEER_ISSUER)
                 .map(|(_, issuer)| Name::parse(issuer))
                 .ok_or_else(|| {
                     AuthenticateError::new(
@@ -99,7 +101,7 @@ mod tests {
 
     fn presented(handshake: Option<&str>) -> Presented {
         let claim = Presented::passed(mechanism::mutual_tls(), "CN=partner-x.example,O=Partner X")
-            .with_evidence(evidence::TLS_PEER_ISSUER, "CN=Partner CA, O=Partner X");
+            .with_evidence(property::TLS_PEER_ISSUER, "CN=Partner CA, O=Partner X");
 
         match handshake {
             Some(word) => claim.with_proof(evidence::MUTUAL_TLS_HANDSHAKE, word),
