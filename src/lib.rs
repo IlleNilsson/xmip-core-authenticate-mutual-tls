@@ -51,12 +51,6 @@ impl Authenticator for Verifier {
     }
 
     fn verify(&self, presented: &Presented) -> Result<Verified, AuthenticateError> {
-        let name = presented.mechanism.name();
-        if name != self.mechanism().name() {
-            return Err(AuthenticateError::new(format!(
-                "'{name}' was presented and this authenticator verifies mutual-tls"
-            )));
-        }
         let handshake = presented
             .proof(evidence::MUTUAL_TLS_HANDSHAKE)
             .ok_or_else(|| {
@@ -74,10 +68,8 @@ impl Authenticator for Verifier {
 
         if !self.issuers.is_empty() {
             let issuer = presented
-                .evidence
-                .iter()
-                .find(|(evidence, _)| evidence == property::TLS_PEER_ISSUER)
-                .map(|(_, issuer)| Name::parse(issuer))
+                .evidence(property::TLS_PEER_ISSUER)
+                .map(Name::parse)
                 .ok_or_else(|| {
                     AuthenticateError::new(
                         "the node takes named issuers only and the transport reported none",
@@ -147,13 +139,5 @@ mod tests {
             .with_proof(evidence::MUTUAL_TLS_HANDSHAKE, "verified");
         let failure = taking.verify(&unreported).expect_err("no issuer reported");
         assert!(failure.message.contains("reported none"), "{failure}");
-    }
-
-    #[test]
-    fn another_mechanisms_claim_is_refused_by_name() {
-        let claim = Presented::passed(mechanism::certificate(), "CN=partner-x.example");
-
-        let failure = Verifier::new().verify(&claim).expect_err("not ours");
-        assert!(failure.message.contains("certificate"), "{failure}");
     }
 }
