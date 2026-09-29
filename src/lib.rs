@@ -92,8 +92,8 @@ mod tests {
     use super::*;
 
     fn presented(handshake: Option<&str>) -> Presented {
-        let claim = Presented::passed(mechanism::mutual_tls(), "CN=partner-x.example,O=Partner X")
-            .with_evidence(property::TLS_PEER_ISSUER, "CN=Partner CA, O=Partner X");
+        let claim = Presented::passed(mechanism::mutual_tls(), "CN=party-x.example,O=Party X")
+            .with_evidence(property::TLS_PEER_ISSUER, "CN=Party CA, O=Party X");
 
         match handshake {
             Some(word) => claim.with_proof(evidence::MUTUAL_TLS_HANDSHAKE, word),
@@ -124,7 +124,7 @@ mod tests {
 
     #[test]
     fn a_node_that_names_its_issuers_takes_those_and_refuses_the_rest() {
-        let taking = Verifier::new().from_issuer("O=Partner X,CN=Partner CA");
+        let taking = Verifier::new().from_issuer("O=Party X,CN=Party CA");
         taking
             .verify(&presented(Some("verified")))
             .expect("the named issuer, in another order");
@@ -135,7 +135,7 @@ mod tests {
             .expect_err("another issuer");
         assert!(failure.message.contains("does not take"), "{failure}");
 
-        let unreported = Presented::passed(mechanism::mutual_tls(), "CN=partner-x.example")
+        let unreported = Presented::passed(mechanism::mutual_tls(), "CN=party-x.example")
             .with_proof(evidence::MUTUAL_TLS_HANDSHAKE, "verified");
         let failure = taking.verify(&unreported).expect_err("no issuer reported");
         assert!(failure.message.contains("reported none"), "{failure}");

@@ -17,7 +17,7 @@ the reported issuer is not one of them.
 ## Configuration
 
 `Verifier::new()` takes any client certificate the handshake proved;
-`.from_issuer("CN=Partner CA,O=Partner X")` narrows to that issuer, in any
+`.from_issuer("CN=Party CA,O=Party X")` narrows to that issuer, in any
 attribute order, and may be called again for another.
 
 ## Dependencies
