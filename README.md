@@ -24,9 +24,12 @@ attribute order, and may be called again for another.
 
 Its capability with the `x509` feature on, for the name an issuer allow-list
 compares (ADR-0044), `context` for `Verified` and `xmip-core` for the
-mechanism. No key is touched here: the transport's server TLS is where the
-chain is verified, and that path is the transport's to grow (ADR-0033 clause
-4, steps 2 and 3).
+mechanism; the transport's word is `context::property::TLS_HANDSHAKE_VERIFIED`,
+written there once for the transport that writes it and this gate. No key is
+touched here: the transport's server TLS is where the chain is verified —
+`transport::Guard`, which tcp terminates a Receive Location's TLS with
+(ADR-0033, amendment 2026-10-19). `xmip-service` links it, taken where a
+Receive Location's `accept.mechanism` names `mutual-tls`.
 
 ## Toolchain
 
