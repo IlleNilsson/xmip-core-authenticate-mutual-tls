@@ -16,13 +16,10 @@
 use authenticate::x509::Name;
 use authenticate::{AuthenticateError, Authenticator};
 use context::Verified;
-use context::property;
+use context::property::{self, TLS_HANDSHAKE_VERIFIED as VERIFIED};
 use identify::Presented;
 use identify::evidence::{self, MUTUAL_TLS_HANDSHAKE};
 use xcore::{Mechanism, mechanism};
-
-/// The word the transport promotes when its handshake verified the chain.
-pub const VERIFIED: &str = "verified";
 
 /// The mutual-tls authenticator: which issuers the node takes, if it narrows.
 #[derive(Default)]
