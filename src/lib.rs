@@ -9,16 +9,16 @@
 //! is to record what the transport proved, not to redo the cryptography
 //! (ADR-0033). The first gate presents the subject with the
 //! `mutual-tls.handshake` proof the transport promoted — `verified`, and
-//! nothing else counts — and this gate answers Proven for it, refused where
-//! the proof is missing or says anything else, and refused where the node
-//! narrows which issuers it takes and the reported issuer is not one.
+//! nothing else counts — and the capability's `Handshake`, the one rule
+//! for it, answers Proven; this gate adds the node's narrowing, refusing
+//! where the node names which issuers it takes and the reported issuer is
+//! not one.
 
 use authenticate::x509::Name;
-use authenticate::{AuthenticateError, Authenticator};
+use authenticate::{AuthenticateError, Authenticator, Handshake};
 use context::Verified;
-use context::property::{self, TLS_HANDSHAKE_VERIFIED as VERIFIED};
+use context::property;
 use identify::Presented;
-use identify::evidence::{self, MUTUAL_TLS_HANDSHAKE};
 use xcore::{Mechanism, mechanism};
 
 /// The mutual-tls authenticator: which issuers the node takes, if it narrows.
@@ -48,20 +48,8 @@ impl Authenticator for Verifier {
     }
 
     fn verify(&self, presented: &Presented) -> Result<Verified, AuthenticateError> {
-        let handshake = presented
-            .proof(evidence::MUTUAL_TLS_HANDSHAKE)
-            .ok_or_else(|| {
-                AuthenticateError::new(format!(
-                    "no {MUTUAL_TLS_HANDSHAKE} proof was presented: \
-                 the transport did not say it verified the peer"
-                ))
-            })?;
-        if handshake.trim() != VERIFIED {
-            return Err(AuthenticateError::new(format!(
-                "the transport's word on the handshake is '{}', not '{VERIFIED}'",
-                handshake.trim()
-            )));
-        }
+        // The handshake's rule is the capability's, once (`Handshake`).
+        Handshake.verify(presented)?;
 
         if !self.issuers.is_empty() {
             let issuer = presented
@@ -87,6 +75,7 @@ impl Authenticator for Verifier {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use identify::evidence;
 
     fn presented(handshake: Option<&str>) -> Presented {
         let claim = Presented::passed(mechanism::mutual_tls(), "CN=party-x.example,O=Party X")

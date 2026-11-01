@@ -10,9 +10,10 @@ with, and only then read a byte of content. This gate records what the
 transport proved and does not redo the cryptography (ADR-0033). The first
 gate (`identify/certificate`) presents the subject with the transport's word
 riding as the `mutual-tls.handshake` proof — `verified`, and nothing else
-counts. Proven for that; refused, saying so, where the proof is missing or
-says anything else, and where the node narrows which issuers it takes and
-the reported issuer is not one of them.
+counts. Proven for that, by the capability's `Handshake`, the one rule for
+it, which a node's operate listener asks too; refused, saying so, where the
+proof is missing or says anything else, and here, where the node narrows
+which issuers it takes and the reported issuer is not one of them.
 
 ## Configuration
 
