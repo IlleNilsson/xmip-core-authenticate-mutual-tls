@@ -32,11 +32,6 @@ touched here: the transport's server TLS is where the chain is verified —
 (ADR-0033, amendment 2026-10-19). `xmip-service` links it, taken where a
 Receive Location's `accept.mechanism` names `mutual-tls`.
 
-## Toolchain
-
-`rust-toolchain.toml` pins the toolchain for the whole estate. Do not change it
-here.
-
 ## Verification
 
 `cargo test`: four tests — what the handshake verified is proven; a claim
